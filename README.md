@@ -121,6 +121,14 @@ The application provides:
 - Category-wise expense distribution
 - Six-month income and expense comparison
 
+## 🖼️ Application Screenshots
+
+### Dashboard and Financial Analytics
+![Dashboard](screenshots/dashboard.png)
+
+### Transaction Management
+![Transactions](screenshots/transactions.png)
+
 ## 🔒 Security
 
 - Passwords are stored using password hashing.
