@@ -48,7 +48,23 @@ app = Flask(__name__)
 # Application configuration
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///expense_tracker.db"
+database_url = os.environ.get("DATABASE_URL")
+
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace(
+            "postgres://", "postgresql://", 1
+        )
+
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace(
+            "postgresql://", "postgresql+psycopg://", 1
+        )
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///expense_tracker.db"
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -73,7 +89,7 @@ def load_user(user_id):
 
 @app.route("/")
 def home():
-    return "Personal Expense Tracker Database Connected!"
+    return redirect(url_for("login"))
 
 
 # Create database tables
@@ -251,8 +267,15 @@ def dashboard():
 
 
     # Get income and expenses grouped by month
+ 
+    
+    month_expression = db.func.to_char(
+        Expense.date,
+        db.literal_column("'YYYY-MM'")
+    )
+
     monthly_data = db.session.query(
-        db.func.strftime("%Y-%m", Expense.date).label("month"),
+        month_expression.label("month"),
         Expense.transaction_type,
         db.func.sum(Expense.amount)
     ).filter(
@@ -264,7 +287,7 @@ def dashboard():
         ),
         Expense.date < next_month
     ).group_by(
-        "month",
+        month_expression,
         Expense.transaction_type
     ).all()
 
